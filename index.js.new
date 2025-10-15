@@ -1,0 +1,142 @@
+const { token, ownerId } = require('./config.js');const { token, ownerId } = require('./config.js');
+
+
+
+const profileProcessing = new Map();const profileProcessing = new Map();
+
+const commandCooldown = new Map();const commandCooldown = new Map();
+
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+
+const fs = require('fs');const fs = require('fs');
+
+const lastMessageTime = new Map();
+
+const client = new Client({
+
+console.log('Starting bot...');  intents: [
+
+console.log('Initializing client...');    GatewayIntentBits.Guilds,
+
+    GatewayIntentBits.GuildMessages,
+
+const client = new Client({    GatewayIntentBits.MessageContent,
+
+  intents: [    GatewayIntentBits.GuildPresences,
+
+    GatewayIntentBits.Guilds,    GatewayIntentBits.GuildVoiceStates,
+
+    GatewayIntentBits.GuildMessages,    GatewayIntentBits.GuildMessageReactions,
+
+    GatewayIntentBits.MessageContent,  ],
+
+    GatewayIntentBits.GuildPresences,});
+
+    GatewayIntentBits.GuildVoiceStates,
+
+    GatewayIntentBits.GuildMessageReactions,const dataFile = './userData.json';
+
+  ],
+
+});// Load user data
+
+let userData = {};
+
+const dataFile = './userData.json';if (fs.existsSync(dataFile)) {
+
+  userData = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+
+// Load user data}
+
+let userData = {};
+
+if (fs.existsSync(dataFile)) {// Save user data
+
+  userData = JSON.parse(fs.readFileSync(dataFile, 'utf8'));function saveData() {
+
+}  fs.writeFileSync(dataFile, JSON.stringify(userData, null, 2));
+
+}
+// Save user data
+function saveData() {
+  fs.writeFileSync(dataFile, JSON.stringify(userData, null, 2));
+}
+
+// [Các hàm tiện ích và game logic ở đây]
+
+// Khởi tạo event handlers
+function setupEventHandlers() {
+  // Xóa tất cả listeners cũ
+  client.removeAllListeners();
+
+  // Debug events
+  client.on('debug', info => console.log('Debug:', info));
+  client.on('warn', info => console.log('Warning:', info));
+  client.on('error', error => console.error('Error:', error));
+
+  // Ready event
+  client.once('ready', () => {
+    console.log('=========================');
+    console.log(`Bot is ready!`);
+    console.log(`Logged in as: ${client.user.tag}`);
+    console.log(`Bot ID: ${client.user.id}`);
+    console.log(`Connected to ${client.guilds.cache.size} servers`);
+    console.log('=========================');
+  });
+
+  // Voice state handler
+  client.on('voiceStateUpdate', (oldState, newState) => {
+    const userId = newState.id;
+    const user = userData[userId] || { 
+      lastCheckin: null, streak: 0, totalCheckins: 0, 
+      money: 0, xp: 0, voiceJoinTime: null, lastLevel: 1, 
+      inventory: [], isSearchingJob: false 
+    };
+
+    if (!oldState.channel && newState.channel) {
+      user.voiceJoinTime = Date.now();
+    } else if (oldState.channel && !newState.channel) {
+      if (user.voiceJoinTime) {
+        const timeInVoice = Date.now() - user.voiceJoinTime;
+        const xpGain = Math.floor(timeInVoice / 60000) * 20;
+        user.xp += xpGain;
+        user.voiceJoinTime = null;
+      }
+    }
+
+    userData[userId] = user;
+    saveData();
+  });
+
+  // Message handler
+  client.on('messageCreate', async (message) => {
+    if (message.author.bot) return;
+
+    // XP for chat (light, with cooldown)
+    const now = Date.now();
+    const lastTime = lastMessageTime.get(message.author.id) || 0;
+    if (now - lastTime > 60000) { // 1 minute cooldown
+      const user = userData[message.author.id] || { 
+        lastCheckin: null, streak: 0, totalCheckins: 0, 
+        money: 0, xp: 0, lastLevel: 1, inventory: [], isSearchingJob: false 
+      };
+      user.xp += 10;
+      checkLevelUp(user, message);
+      userData[message.author.id] = user;
+      saveData();
+      lastMessageTime.set(message.author.id, now);
+    }
+
+    // [Xử lý các lệnh ở đây]
+    if (message.content === '!ping') {
+      message.reply('Pong!');
+    }
+
+    // [Thêm các lệnh khác ở đây]
+
+  });
+}
+
+// Khởi động bot
+setupEventHandlers();
+client.login(token);

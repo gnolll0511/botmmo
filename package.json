@@ -1,0 +1,25 @@
+{
+  "name": "discord-bot-mmo-vi",
+  "version": "1.0.0",
+  "description": "A Discord MMO bot similar to OwO, but in Vietnamese",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "mmo",
+    "vietnamese"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
